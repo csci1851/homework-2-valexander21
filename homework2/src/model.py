@@ -209,9 +209,13 @@ class GradientBoostingModel:
                 "f1": None,
                 "roc_auc": None,
             }
-
             num_class = len(np.unique(y_test))
             average = 'binary' if num_class == 2 else 'multiclass'
+
+            metrics["accuracy"] = accuracy_score(y_test, y)
+            metrics["precision"] = precision_score(y_test, y, average=average)
+            metrics['recall'] = recall_score(y_test, y, average=average)
+            metrics['f1'] = f1_score(y_test, y, average=average)
 
             if num_class == 2: 
                 metrics['roc_auc'] = roc_auc_score(y_test, y_proba[:, 1])
@@ -219,12 +223,7 @@ class GradientBoostingModel:
             else: 
                 average = 'weighted'
                 metrics['roc_auc'] = roc_auc_score(y_test, y_proba, average=average, multi_class='ovr')
-
-            metrics["accuracy"] = accuracy_score(y_test, y)
-            metrics["precision"] = precision_score(y_test, y, average=average)
-            metrics['recall'] = recall_score(y_test, y, average=average)
-            metrics['f1'] = f1_score(y_test, y, average=average)
-            
+   
         else:
             metrics = {"rmse": None, "mae": None, "r2": None}
             metrics['rmse'] = mean_squared_error(y_test, y)
@@ -315,12 +314,10 @@ class GradientBoostingModel:
         Returns:
             DataFrame with feature importances
         """
-
         # TODO: Optionally plot a bar chart of top_n feature importances
         feature_importance = self.model.feature_importances_
-        feature_importances = pd.DataFrame({
-            "feature": self.feature_names, 
-            "feature_importance": feature_importance})
+        feature_importances = pd.DataFrame({"feature": self.feature_names, 
+                                            "feature_importance": feature_importance})
         
         importance_sorted = feature_importances.sort_values(by='feature_importance', ascending=False)
         top_n_features = importance_sorted.head(top_n)
@@ -333,7 +330,6 @@ class GradientBoostingModel:
             # plt.savefig('../results/top_n_features')
             # plt.show()
 
-            
         return importance_sorted
 
     def tune_hyperparameters(
@@ -366,6 +362,7 @@ class GradientBoostingModel:
         min_samp_leaf = self.params['min_samples_leaf']
         max_features = self.params['max_features']
         random_state = self.params['random_state']
+
         if self.task == 'regression':
             model = GradientBoostingRegressor(learning_rate=learning_rate, 
                                                   n_estimators=n_estimators, 
@@ -416,13 +413,10 @@ class GradientBoostingModel:
         n_est = self.params['n_estimators']
         if tree_index > n_est:
             raise ValueError(f'Tree index out of range > {n_est}')
+        
         else:
-       
             est = self.model.estimators_
             plt.figure(figsize=figsize)
             plot_tree(est[tree_index][0], feature_names=self.feature_names)
             # plt.savefig('../results/plot_tree')
             plt.show()
-        
-     
-        
